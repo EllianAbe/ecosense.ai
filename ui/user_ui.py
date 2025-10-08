@@ -64,13 +64,16 @@ def page_edit_user():
     st.header(title)
 
     user_to_edit = None
-    if is_edit_mode:
-        user_to_edit = user_service.get_user(user_id)
-        if not user_to_edit:
-            st.error("Usuário não encontrado.")
-            return
 
-    default_description = user_to_edit.description if user_to_edit else ""
+    if is_edit_mode:
+        result = user_service.get_user(user_id)
+
+        if result['status'] == 'success':
+            user_to_edit = result['data']
+        else:
+            send_feedback(**result)
+
+    default_description = user_to_edit.username if user_to_edit else ""
     positions = [pos.value for pos in UserPosition]
     default_position_index = positions.index(
         user_to_edit.position.value) if user_to_edit else 0

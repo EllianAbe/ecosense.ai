@@ -10,8 +10,6 @@ class AuthService():
     def auth(self, username):
         result = user_service.get_user(username=username)
 
-        print(result)
-
         if result['status'] == 'success':
             return result['data']
 
