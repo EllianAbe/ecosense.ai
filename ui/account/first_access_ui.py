@@ -1,7 +1,6 @@
 import streamlit as st
 from service.user_service import UserService
-from router import router
-
+from navigation import navigation
 user_service = UserService()
 
 
@@ -15,7 +14,7 @@ def page_first_access():
             result = user_service.create_user(username, "admin")
             if result["status"] == "success":
                 st.success(result["message"])
-                router.route_to('login')
+                navigation.goto('login')
             else:
                 st.error(result["message"])
         else:

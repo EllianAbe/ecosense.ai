@@ -1,8 +1,8 @@
 import streamlit as st
 from service.collect_type_service import CollectTypeService
-from ui import feedback
-from ui.components import home_button
-from router import router
+from ui.components import feedback
+from ui.components import go_back_button
+from navigation import navigation
 
 
 def page_list_collect_types():
@@ -10,10 +10,10 @@ def page_list_collect_types():
 
     collect_type_service = CollectTypeService()
 
-    home_button()
+    go_back_button()
 
     if st.button("Criar Novo Tipo de Coleta"):
-        router.route_to("collect_type/edit")
+        navigation.goto("collect_type/edit")
 
     collect_types_result = collect_type_service.read_collect_types()
 
@@ -42,8 +42,8 @@ def page_list_collect_types():
             col2.write(collect_type.description)
 
             if col3.button("Editar", key=f"edit_{collect_type.id}"):
-                st.session_state.collect_type_id_to_edit = collect_type.id
-                router.route_to("collect_type/edit")
+                navigation.goto("collect_type/edit",
+                                {'collect_type_id': collect_type.id})
 
             if col4.button("Deletar", key=f"delete_{collect_type.id}"):
                 result = collect_type_service.delete_collect_type(
@@ -54,7 +54,7 @@ def page_list_collect_types():
 
 
 def page_edit_collect_type():
-    collect_type_id = st.session_state.get('collect_type_id_to_edit')
+    collect_type_id = navigation.get_page_args().get('collect_type_id')
     is_edit_mode = collect_type_id is not None
     title = "Editar Tipo de Coleta" if is_edit_mode else "Cadastro de Novo Tipo de Coleta"
     button_label = "Salvar Alterações" if is_edit_mode else "Cadastrar"
@@ -93,4 +93,4 @@ def page_edit_collect_type():
                 feedback.send_feedback(**result)
 
     if st.button("Voltar para a Listagem"):
-        router.route_to("collect_type")
+        navigation.goto("collect_type")

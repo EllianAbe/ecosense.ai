@@ -1,9 +1,9 @@
 import streamlit as st
 from db.models import UserPosition
 from service.user_service import UserService
-from ui.components import home_button
-from ui.feedback import send_feedback
-from router import router
+from ui.components import go_back_button
+from ui.components.feedback import send_feedback
+from navigation import navigation
 
 user_service = UserService()
 
@@ -11,20 +11,24 @@ user_service = UserService()
 def page_list_users():
     st.header("Usuários Cadastrados")
 
-    home_button()
+    col1, col2, _ = st.columns([1.5, 3, 8.5])
 
-    if st.button("Criar Novo Usuário"):
-        router.route_to("user/edit")
+    with col1:
+        go_back_button()
+
+    with col2:
+        if st.button("Criar Novo Usuário"):
+            navigation.goto("user/edit")
 
     users_result = user_service.read_users()
     if users_result['status'] == 'error':
         st.error(users_result['message'])
-        return
+        st.stop()
 
     users = users_result['data']
     if not users_result:
         st.info("Nenhum usuário cadastrado ainda.")
-        return
+        st.stop()
 
     # Cabeçalhos da tabela
 
@@ -46,8 +50,7 @@ def page_list_users():
             col3.write(user.position.value)
 
             if col4.button("Editar", key=f"edit_{user.id}"):
-                st.session_state.user_id_to_edit = user.id
-                router.route_to("user/edit")
+                navigation.goto("user/edit", {'user_id': user.id})
 
             if col5.button("Deletar", key=f"delete_{user.id}"):
                 user_service.delete_user(user.id)
@@ -55,7 +58,7 @@ def page_list_users():
 
 
 def page_edit_user():
-    user_id = st.session_state.get('user_id_to_edit')
+    user_id = navigation.get_page_args().get('user_id')
 
     is_edit_mode = user_id is not None
     title = "Editar Usuário" if is_edit_mode else "Cadastro de Novo Usuário"
@@ -101,4 +104,4 @@ def page_edit_user():
                 send_feedback(**result)
 
     if st.button("Voltar para a Listagem"):
-        router.route_to("user")
+        navigation.goto("user")

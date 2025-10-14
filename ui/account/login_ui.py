@@ -1,18 +1,17 @@
 import streamlit as st
 from service.auth_service import AuthService
 from service.user_service import UserService
-from router import router
-
+from navigation import navigation
 auth_service = AuthService()
 user_service = UserService()
 
 
 def page_login():
     if 'user' in st.session_state and st.session_state.user:
-        router.route_to('home')
+        navigation.goto('home')
 
     if user_service.is_table_empty():
-        router.route_to('first_access')
+        navigation.goto('first_access')
 
     st.title("Tela de Login")
 
@@ -22,6 +21,12 @@ def page_login():
     if st.button("Logar"):
         if user := auth_service.auth(username):
             st.session_state.user = user
-            router.route_to('home')
+            navigation.goto('home')
         else:
             st.error("Usuário ou senha incorretos.")
+
+
+def logout():
+    if st.button("Log out"):
+        st.session_state.logged_in = False
+        st.rerun()

@@ -1,5 +1,5 @@
 import streamlit as st
-from router import router
+from navigation import navigation
 
 
 def page_home():
@@ -7,10 +7,10 @@ def page_home():
     st.write("Selecione uma opção abaixo:")
 
     if st.button("Listar Usuários"):
-        router.route_to('user')
+        navigation.goto('user')
 
     if st.button("Listar Tipos de Coleta"):
-        router.route_to('collect_type')
+        navigation.goto('collect_type')
 
     if st.button("Listar Pontos de Coleta"):
-        router.route_to('collect_point')
+        navigation.goto('collect_point')

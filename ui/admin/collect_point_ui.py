@@ -1,8 +1,8 @@
 import streamlit as st
 from service.collect_point_service import CollectPointService
-from ui import feedback
-from ui.components import home_button
-from router import router
+from ui.components import feedback
+from ui.components import go_back_button
+from navigation import navigation
 
 
 def page_list_collect_points():
@@ -10,12 +10,10 @@ def page_list_collect_points():
 
     collect_point_service = CollectPointService()
 
-    home_button()
+    go_back_button()
 
     if st.button("Criar Novo Ponto de Coleta"):
-        st.session_state.collect_point_id_to_edit = None
-
-        router.route_to("collect_point/edit")
+        navigation.goto("collect_point/edit")
 
     collect_points_result = collect_point_service.read_collect_points()
 
@@ -29,7 +27,8 @@ def page_list_collect_points():
         return
 
     with st.container(border=True):
-        col1, col2, col3, col4, col5, col6 = st.columns([1, 3, 2, 2, 2, 2])
+        col1, col2, col3, col4, col5, col6, col7 = st.columns(
+            [1, 3, 2, 2, 2, 2, 2])
 
         col1.write("**ID**")
         col2.write("**Descrição**")
@@ -37,10 +36,12 @@ def page_list_collect_points():
         col4.write("**Cidade**")
         col5.write("**Editar**")
         col6.write("**Deletar**")
+        col7.write("**Tipos**")
 
     for collect_point in collect_points:
         with st.container(border=True):
-            col1, col2, col3, col4, col5, col6 = st.columns([1, 3, 2, 2, 2, 2])
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(
+                [1, 3, 2, 2, 2, 2, 2])
 
             col1.write(collect_point.id)
             col2.write(collect_point.description)
@@ -48,8 +49,8 @@ def page_list_collect_points():
             col4.write(f"{collect_point.city} - {collect_point.state}")
 
             if col5.button("Editar", key=f"edit_{collect_point.id}"):
-                st.session_state.collect_point_id_to_edit = collect_point.id
-                router.route_to("collect_point/edit")
+                navigation.goto("collect_point/edit",
+                                {'collect_point_id': collect_point.id})
 
             if col6.button("Deletar", key=f"delete_{collect_point.id}"):
                 result = collect_point_service.delete_collect_point(
@@ -58,9 +59,13 @@ def page_list_collect_points():
 
                 st.rerun()
 
+            if col7.button("Tipos", key=f"types_{collect_point.id}"):
+                navigation.goto("collect_point/types",
+                                {'collect_point_id': collect_point.id})
+
 
 def page_edit_collect_point():
-    collect_point_id = st.session_state.get('collect_point_id_to_edit')
+    collect_point_id = navigation.get_page_args().get('collect_point_id')
     is_edit_mode = collect_point_id is not None
     title = "Editar Ponto de Coleta" if is_edit_mode else "Cadastro de Novo Ponto de Coleta"
     button_label = "Salvar Alterações" if is_edit_mode else "Cadastrar"
@@ -126,4 +131,4 @@ def page_edit_collect_point():
                 feedback.send_feedback(**result)
 
     if st.button("Voltar para a Listagem"):
-        router.route_to("collect_point")
+        navigation.goto("collect_point")
