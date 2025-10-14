@@ -1,25 +1,101 @@
+import os
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from huggingface_hub import login as hf_login
+
 from db.database import SessionLocal
 from db.models import CollectTypes
 from sqlalchemy.orm import Session
+
+# --- Embedding setup ---
+HF_TOKEN = os.environ.get("HUGGINGFACE_TOKEN") or "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"
+
+print("Logging in to Hugging Face...")
+hf_login(HF_TOKEN)
+
+print("Loading embedding model google/embeddinggemma-300m (this may take a while)...")
+embedder = SentenceTransformer("google/embeddinggemma-300m")
+EMBED_DIM = embedder.get_sentence_embedding_dimension()
+
+# --- FAISS setup ---
+FAISS_INDEX_PATH = "collect_types.faiss"
+FAISS_ID_MAP_PATH = "collect_type_ids.npy"
+
+def load_faiss_index():
+    """Load FAISS index and ID map from disk (if exist)."""
+    if os.path.exists(FAISS_INDEX_PATH) and os.path.exists(FAISS_ID_MAP_PATH):
+        index = faiss.read_index(FAISS_INDEX_PATH)
+        id_map = np.load(FAISS_ID_MAP_PATH)
+    else:
+        index = faiss.IndexFlatL2(EMBED_DIM)
+        id_map = np.array([], dtype=np.int32)
+    return index, id_map
+
+def save_faiss_index(index, id_map):
+    """Persist FAISS index and ID map."""
+    faiss.write_index(index, FAISS_INDEX_PATH)
+    np.save(FAISS_ID_MAP_PATH, id_map)
+
 
 class CollectTypeService:
     def __init__(self, db: Session = None):
         self.db = SessionLocal() if db is None else db
 
+    def _add_embedding_to_faiss(self, collect_type_id: int, description: str):
+        """Generate embedding and add to FAISS index."""
+        index, id_map = load_faiss_index()
+        embedding = embedder.encode([description], convert_to_numpy=True)
+        index.add(embedding)
+        id_map = np.append(id_map, collect_type_id)
+        save_faiss_index(index, id_map)
+
+    def _update_embedding_in_faiss(self, collect_type_id: int, description: str):
+        """Update an embedding when description changes."""
+        index, id_map = load_faiss_index()
+        if collect_type_id in id_map:
+            pos = np.where(id_map == collect_type_id)[0][0]
+            embedding = embedder.encode([description], convert_to_numpy=True)
+            index.reconstruct(pos)  # placeholder to ensure FAISS aware of modification
+            index.remove_ids(np.array([pos], dtype=np.int64))
+            index.add(embedding)
+        else:
+            # If missing (maybe FAISS index was reset), add it
+            embedding = embedder.encode([description], convert_to_numpy=True)
+            index.add(embedding)
+            id_map = np.append(id_map, collect_type_id)
+        save_faiss_index(index, id_map)
+
+    def _delete_embedding_from_faiss(self, collect_type_id: int):
+        """Remove embedding when item is deleted."""
+        index, id_map = load_faiss_index()
+        if collect_type_id in id_map:
+            pos = np.where(id_map == collect_type_id)[0][0]
+            index.remove_ids(np.array([pos], dtype=np.int64))
+            id_map = np.delete(id_map, pos)
+            save_faiss_index(index, id_map)
+
     def create_collect_type(self, description: str):
-        """Cria um novo tipo de coleta no banco de dados."""
+        """Cria um novo tipo de coleta no banco de dados e adiciona o embedding."""
         try:
             new_collect_type = CollectTypes(description=description)
             self.db.add(new_collect_type)
             self.db.commit()
             self.db.refresh(new_collect_type)
-            return {"status": "success", "message": f"Tipo de coleta '{description}' cadastrado com sucesso!", "data": new_collect_type}
+
+            # Add embedding
+            self._add_embedding_to_faiss(new_collect_type.id, description)
+
+            return {
+                "status": "success",
+                "message": f"Tipo de coleta '{description}' cadastrado com sucesso!",
+                "data": new_collect_type
+            }
         except Exception as e:
             self.db.rollback()
             return {"status": "error", "message": f"Ocorreu um erro ao cadastrar o tipo de coleta: {e}"}
         finally:
             self.db.close()
-
 
     def read_collect_types(self):
         try:
@@ -42,16 +118,23 @@ class CollectTypeService:
         finally:
             self.db.close()
 
-
     def update_collect_type(self, collect_type_id: int, description: str):
-        """Atualiza um tipo de coleta existente no banco de dados."""
+        """Atualiza um tipo de coleta existente no banco de dados e o embedding."""
         try:
             collect_type_to_update = self.db.query(CollectTypes).filter(CollectTypes.id == collect_type_id).first()
             if collect_type_to_update:
                 collect_type_to_update.description = description
                 self.db.commit()
                 self.db.refresh(collect_type_to_update)
-                return {"status": "success", "message": f"Tipo de coleta '{description}' atualizado com sucesso!", "data": collect_type_to_update}
+
+                # Update embedding
+                self._update_embedding_in_faiss(collect_type_id, description)
+
+                return {
+                    "status": "success",
+                    "message": f"Tipo de coleta '{description}' atualizado com sucesso!",
+                    "data": collect_type_to_update
+                }
             else:
                 return {"status": "error", "message": f"Tipo de coleta com ID {collect_type_id} não encontrado."}
         except Exception as e:
@@ -60,14 +143,17 @@ class CollectTypeService:
         finally:
             self.db.close()
 
-
     def delete_collect_type(self, collect_type_id: int):
-        """Deleta um tipo de coleta do banco de dados."""
+        """Deleta um tipo de coleta do banco de dados e o embedding."""
         try:
             collect_type_to_delete = self.db.query(CollectTypes).filter(CollectTypes.id == collect_type_id).first()
             if collect_type_to_delete:
                 self.db.delete(collect_type_to_delete)
                 self.db.commit()
+
+                # Delete embedding
+                self._delete_embedding_from_faiss(collect_type_id)
+
                 return {"status": "success", "message": f"Tipo de coleta ID {collect_type_id} deletado com sucesso!"}
             else:
                 return {"status": "error", "message": f"Tipo de coleta com ID {collect_type_id} não encontrado."}
