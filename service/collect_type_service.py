@@ -57,11 +57,11 @@ class CollectTypeService:
         if collect_type_id in id_map:
             pos = np.where(id_map == collect_type_id)[0][0]
             embedding = embedder.encode([description], convert_to_numpy=True)
-            index.reconstruct(pos)  # placeholder to ensure FAISS aware of modification
+            index.reconstruct(pos)  # placeholder 
             index.remove_ids(np.array([pos], dtype=np.int64))
             index.add(embedding)
         else:
-            # If missing (maybe FAISS index was reset), add it
+            # Se não houver, adicoina
             embedding = embedder.encode([description], convert_to_numpy=True)
             index.add(embedding)
             id_map = np.append(id_map, collect_type_id)
@@ -84,7 +84,7 @@ class CollectTypeService:
             self.db.commit()
             self.db.refresh(new_collect_type)
 
-            # Add embedding
+            # Adiciona o embedding
             self._add_embedding_to_faiss(new_collect_type.id, description)
 
             return {
@@ -152,7 +152,7 @@ class CollectTypeService:
                 self.db.delete(collect_type_to_delete)
                 self.db.commit()
 
-                # Delete embedding
+                # Deletar embedding
                 self._delete_embedding_from_faiss(collect_type_id)
 
                 return {"status": "success", "message": f"Tipo de coleta ID {collect_type_id} deletado com sucesso!"}
