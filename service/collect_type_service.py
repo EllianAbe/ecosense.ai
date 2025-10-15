@@ -9,12 +9,13 @@ from db.models import CollectTypes
 from sqlalchemy.orm import Session
 
 # --- Embedding setup ---
+#TODO: Substituir o token
 HF_TOKEN = os.environ.get("HUGGINGFACE_TOKEN") or "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"
 
-print("Logging in to Hugging Face...")
+print("Acessando Hugging Face...")
 hf_login(HF_TOKEN)
 
-print("Loading embedding model google/embeddinggemma-300m (this may take a while)...")
+print("Carregando embedding model google/embeddinggemma-300m (aguarde)...")
 embedder = SentenceTransformer("google/embeddinggemma-300m")
 EMBED_DIM = embedder.get_sentence_embedding_dimension()
 
@@ -23,7 +24,7 @@ FAISS_INDEX_PATH = "collect_types.faiss"
 FAISS_ID_MAP_PATH = "collect_type_ids.npy"
 
 def load_faiss_index():
-    """Load FAISS index and ID map from disk (if exist)."""
+    """Carrega o índice e mapa de IDs do FAISS (se houver)"""
     if os.path.exists(FAISS_INDEX_PATH) and os.path.exists(FAISS_ID_MAP_PATH):
         index = faiss.read_index(FAISS_INDEX_PATH)
         id_map = np.load(FAISS_ID_MAP_PATH)
@@ -33,7 +34,7 @@ def load_faiss_index():
     return index, id_map
 
 def save_faiss_index(index, id_map):
-    """Persist FAISS index and ID map."""
+    """Persiste índice e mapa de ID do FAISS no disco."""
     faiss.write_index(index, FAISS_INDEX_PATH)
     np.save(FAISS_ID_MAP_PATH, id_map)
 
@@ -43,7 +44,7 @@ class CollectTypeService:
         self.db = SessionLocal() if db is None else db
 
     def _add_embedding_to_faiss(self, collect_type_id: int, description: str):
-        """Generate embedding and add to FAISS index."""
+        """Cria embedding e adiciona no FAISS"""
         index, id_map = load_faiss_index()
         embedding = embedder.encode([description], convert_to_numpy=True)
         index.add(embedding)
@@ -51,7 +52,7 @@ class CollectTypeService:
         save_faiss_index(index, id_map)
 
     def _update_embedding_in_faiss(self, collect_type_id: int, description: str):
-        """Update an embedding when description changes."""
+        """Atualizar o embedding."""
         index, id_map = load_faiss_index()
         if collect_type_id in id_map:
             pos = np.where(id_map == collect_type_id)[0][0]
@@ -67,7 +68,7 @@ class CollectTypeService:
         save_faiss_index(index, id_map)
 
     def _delete_embedding_from_faiss(self, collect_type_id: int):
-        """Remove embedding when item is deleted."""
+        """Remove embedding quando um item é deletado."""
         index, id_map = load_faiss_index()
         if collect_type_id in id_map:
             pos = np.where(id_map == collect_type_id)[0][0]
