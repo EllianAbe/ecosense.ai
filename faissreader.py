@@ -1,0 +1,18 @@
+import faiss
+import numpy as np
+
+# Load your FAISS index from disk
+index = faiss.read_index("collect_types.faiss")
+
+print("Number of vectors in FAISS:", index.ntotal)
+print("Dimension of vectors:", index.d)
+
+# Inspect a few vectors
+for i in range(min(5, index.ntotal)):
+    vector = index.reconstruct(i)  # get the actual vector as numpy array
+    print(f"\nVector {i}:")
+    print(vector[:10], "...")  # show only first 10 values for brevity
+
+# Optional: get all vectors
+all_vectors = np.array([index.reconstruct(i) for i in range(index.ntotal)])
+print("\nAll vectors shape:", all_vectors.shape)
