@@ -10,10 +10,11 @@ def page_list_collect_types():
 
     collect_type_service = CollectTypeService()
 
-    home_button()
+    with st.container(horizontal=True):
+        home_button()
 
-    if st.button("Criar Novo Tipo de Coleta"):
-        navigation.goto("collect_type/edit")
+        if st.button("Criar Novo Tipo de Coleta"):
+            navigation.goto("collect_type/edit")
 
     collect_types_result = collect_type_service.read_collect_types()
 

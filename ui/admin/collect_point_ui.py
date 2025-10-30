@@ -10,10 +10,11 @@ def page_list_collect_points():
 
     collect_point_service = CollectPointService()
 
-    home_button()
+    with st.container(horizontal=True):
+        home_button()
 
-    if st.button("Criar Novo Ponto de Coleta"):
-        navigation.goto("collect_point/edit")
+        if st.button("Criar Novo Ponto de Coleta"):
+            navigation.goto("collect_point/edit")
 
     collect_points_result = collect_point_service.read_collect_points()
 

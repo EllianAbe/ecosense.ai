@@ -11,12 +11,9 @@ user_service = UserService()
 def page_list_users():
     st.header("Usuários Cadastrados")
 
-    col1, col2, _ = st.columns([1.5, 3, 8.5])
-
-    with col1:
+    with st.container(horizontal=True):
         home_button()
 
-    with col2:
         if st.button("Criar Novo Usuário"):
             navigation.goto("user/edit")
 
