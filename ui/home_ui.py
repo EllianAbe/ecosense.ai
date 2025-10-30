@@ -14,3 +14,6 @@ def page_home():
 
     if st.button("Listar Pontos de Coleta"):
         navigation.goto('collect_point')
+
+    if st.button('Chatbot'):
+        navigation.goto('chatbot')
