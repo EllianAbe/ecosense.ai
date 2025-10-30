@@ -16,4 +16,4 @@ for i in range(min(5, index.ntotal)):
 
 # Optional: get all vectors
 all_vectors = np.array([index.reconstruct(i) for i in range(index.ntotal)])
-logger.info("\nAll vectors shape:", all_vectors.shape)
+logger.info(f"\nAll vectors shape: {all_vectors.shape}")
