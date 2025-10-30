@@ -3,25 +3,27 @@ import faiss
 import numpy as np
 import threading
 import streamlit as st
-from time import sleep
 from sentence_transformers import SentenceTransformer
 from huggingface_hub import login as hf_login
 from db.database import SessionLocal
 from db.models import CollectTypes
 from sqlalchemy.orm import Session
-
+from logger import logger
 
 # --- Lazy model setup with caching and async warm-up ---
+
 
 @st.cache_resource
 def get_embedder():
     """Carrega e cacheia o modelo de embedding."""
-    HF_TOKEN = os.environ.get("HUGGINGFACE_TOKEN") or "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"
-    print("🔑 Conectando ao Hugging Face...")
+    HF_TOKEN = os.environ.get(
+        "HUGGINGFACE_TOKEN") or "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"
+    logger.info("🔑 Conectando ao Hugging Face...")
     hf_login(HF_TOKEN)
-    print("📦 Carregando modelo 'google/embeddinggemma-300m' (isso pode demorar na primeira vez)...")
+    logger.info(
+        "📦 Carregando modelo 'google/embeddinggemma-300m' (isso pode demorar na primeira vez)...")
     model = SentenceTransformer("google/embeddinggemma-300m")
-    print("✅ Modelo carregado e cacheado.")
+    logger.info("✅ Modelo carregado e cacheado.")
     return model
 
 
@@ -29,11 +31,11 @@ def warm_up_model():
     """Pré-carrega o modelo em background sem travar o Streamlit."""
     def _load():
         try:
-            print("🕓 Iniciando carregamento assíncrono do modelo...")
+            logger.info("🕓 Iniciando carregamento assíncrono do modelo...")
             _ = get_embedder()
-            print("🔥 Modelo pronto para uso (carregado em background).")
+            logger.info("🔥 Modelo pronto para uso (carregado em background).")
         except Exception as e:
-            print(f"⚠️ Falha ao carregar modelo em background: {e}")
+            logger.info(f"⚠️ Falha ao carregar modelo em background: {e}")
 
     threading.Thread(target=_load, daemon=True).start()
 
@@ -135,7 +137,8 @@ class CollectTypeService:
 
     def read_collect_types(self):
         try:
-            collect_types = self.db.query(CollectTypes).order_by(CollectTypes.id).all()
+            collect_types = self.db.query(
+                CollectTypes).order_by(CollectTypes.id).all()
             return {"status": "success", "data": collect_types}
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -144,7 +147,8 @@ class CollectTypeService:
 
     def get_collect_type(self, collect_type_id: int):
         try:
-            collect_type = self.db.query(CollectTypes).filter(CollectTypes.id == collect_type_id).first()
+            collect_type = self.db.query(CollectTypes).filter(
+                CollectTypes.id == collect_type_id).first()
             if collect_type:
                 return {"status": "success", "data": collect_type}
             else:
@@ -157,7 +161,8 @@ class CollectTypeService:
     def update_collect_type(self, collect_type_id: int, description: str):
         """Atualiza um tipo de coleta existente no banco de dados e o embedding."""
         try:
-            collect_type_to_update = self.db.query(CollectTypes).filter(CollectTypes.id == collect_type_id).first()
+            collect_type_to_update = self.db.query(CollectTypes).filter(
+                CollectTypes.id == collect_type_id).first()
             if collect_type_to_update:
                 collect_type_to_update.description = description
                 self.db.commit()
@@ -182,7 +187,8 @@ class CollectTypeService:
     def delete_collect_type(self, collect_type_id: int):
         """Deleta um tipo de coleta do banco de dados e o embedding."""
         try:
-            collect_type_to_delete = self.db.query(CollectTypes).filter(CollectTypes.id == collect_type_id).first()
+            collect_type_to_delete = self.db.query(CollectTypes).filter(
+                CollectTypes.id == collect_type_id).first()
             if collect_type_to_delete:
                 self.db.delete(collect_type_to_delete)
                 self.db.commit()
