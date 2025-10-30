@@ -1,6 +1,6 @@
 from ui.account import first_access_ui, login_ui
-from ui.admin import collect_point_ui, collect_type_ui, user_ui, collect_point_type_ui, chatbot_ui
-from ui import home_ui
+from ui.admin import collect_point_ui, collect_type_ui, user_ui, collect_point_type_ui
+from ui import chatbot_ui, home_ui
 from navigation import navigation
 from db.database import init_db
 
