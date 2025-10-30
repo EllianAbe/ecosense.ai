@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
-from db.models import CollectPointCollectType
+from db.models import CollectPointCollectType, CollectTypes
 
 
 class CollectPointCollectTypeService:
@@ -71,9 +71,19 @@ class CollectPointCollectTypeService:
             relations = self.db.query(CollectPointCollectType).where(
                 CollectPointCollectType.collect_type_id == collect_type_id).all()
 
-            collect_points = [
-                relation.collect_point for relation in relations
-            ]
+            collect_points = {}
+
+            for relation in relations:
+                point = relation.collect_point
+                type = relation.collect_type
+
+                if point.id not in collect_points:
+                    collect_points[point.id] = {
+                        "collect_point": point,
+                        "collect_types": []
+                    }
+
+                collect_points[point.id]["collect_types"].append(type)
 
             return {"status": "success", "data": collect_points}
 

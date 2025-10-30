@@ -1,17 +1,15 @@
-
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 from huggingface_hub import login as hf_login
 from logger import logger
 import threading
 import os
-import os
 import faiss
 import numpy as np
 
 # --- FAISS setup ---
 FAISS_INDEX_PATH = "collect_types.faiss"
-FAISS_ID_MAP_PATH = "collect_type_ids.npy"
+DISTANCE_THRESHOLD = float(os.getenv('DISTANCE_THRESHOLD', '1.3'))
 
 
 @st.cache_resource
@@ -50,31 +48,37 @@ def get_embed_dim():
 
 def get_embedding(text: str):
     embedder = get_embedder()
-    return embedder.encode([text], convert_to_numpy=True)
+    return embedder.encode([text], convert_to_numpy=True, normalize_embeddings=True)
 
 
 def load_faiss_index():
-    """Carrega o índice e mapa de IDs do FAISS (se houver)."""
-    embed_dim = get_embed_dim()
-    if os.path.exists(FAISS_INDEX_PATH) and os.path.exists(FAISS_ID_MAP_PATH):
+    """Carrega o índice FAISS (IndexIDMap) do disco."""
+    # <--- INÍCIO DA MUDANÇA
+    if os.path.exists(FAISS_INDEX_PATH):
+        logger.info(f"Carregando índice FAISS existente de {FAISS_INDEX_PATH}")
         index = faiss.read_index(FAISS_INDEX_PATH)
-        id_map = np.load(FAISS_ID_MAP_PATH)
     else:
-        index = faiss.IndexFlatL2(embed_dim)
-        id_map = np.array([], dtype=np.int32)
-    return index, id_map
+        logger.info(
+            "Nenhum índice FAISS encontrado. Criando um novo IndexIDMap.")
+        embed_dim = get_embed_dim()
+
+        index_flat = faiss.IndexFlatL2(embed_dim)
+        index = faiss.IndexIDMap(index_flat)
+
+    return index
 
 
-def save_faiss_index(index, id_map):
-    """Persiste índice e mapa de ID do FAISS no disco."""
+def save_faiss_index(index):
+    """Persiste o índice FAISS no disco."""
+    logger.info(f"Salvando índice FAISS em {FAISS_INDEX_PATH}")
     faiss.write_index(index, FAISS_INDEX_PATH)
-    np.save(FAISS_ID_MAP_PATH, id_map)
 
 
-def search_faiss_index(query_text: str, k: int = 3):
+def search_faiss_index(query_text: str, *, k: int = 3, distance_threshold: float = DISTANCE_THRESHOLD):
     try:
         logger.info(f"🔍 Iniciando busca semântica por: '{query_text}'")
-        index, id_map = load_faiss_index()
+
+        index = load_faiss_index()
 
         if index.ntotal == 0:
             logger.warning(
@@ -82,13 +86,30 @@ def search_faiss_index(query_text: str, k: int = 3):
             return [], []
 
         query_embedding = get_embedding(query_text)
-
         k_search = min(k, index.ntotal)
 
-        distances, indices = index.search(query_embedding, k_search)
+        distances, ids = index.search(query_embedding, k_search)
 
-        found_db_ids = [int(id_map[i]) for i in indices[0]]
-        found_distances = distances[0].tolist()
+        original_ids = ids[0]
+        original_distances = distances[0]
+
+        found_db_ids = []
+        found_distances = []
+
+        for i, dist in enumerate(original_distances):
+            db_id = int(original_ids[i])
+
+            if db_id != -1 and dist <= distance_threshold:
+                found_db_ids.append(db_id)
+                found_distances.append(dist)
+
+            elif db_id == -1:
+                pass
+
+            else:
+                logger.info(
+                    f"ℹ️ Resultado ID {db_id} com distância {dist:.4f} (maior que {distance_threshold}) descartado. Parando filtro.")
+                break
 
         logger.info(f"✅ Busca concluída. IDs encontrados: {found_db_ids}")
         return found_db_ids, found_distances

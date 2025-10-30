@@ -52,8 +52,9 @@ def page_collect_point_types():
         if is_selected:
             selected_collect_type_ids.append(collect_type.id)
 
-    # Update the relationships
-    if st.button("Salvar Tipos de Materiais"):
+    actions_container = st.container(horizontal=True)
+
+    if actions_container.button("Salvar Tipos de Materiais"):
         # Delete existing relations
         for relation in existing_relations_data:
             if relation.collect_point_id == collect_point_id:
@@ -73,4 +74,6 @@ def page_collect_point_types():
 
         st.success("Tipos de materiais atualizados com sucesso!")
 
-    home_button()
+    with actions_container:
+        if st.button('Voltar'):
+            navigation.goto('collect_point')

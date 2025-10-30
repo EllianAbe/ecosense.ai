@@ -3,8 +3,14 @@ from ui.admin import collect_point_ui, collect_type_ui, user_ui, collect_point_t
 from ui import chatbot_ui, home_ui
 from navigation import navigation
 from db.database import init_db
+import streamlit as st
 
 init_db()
+
+st.set_page_config(
+    page_title='ECO Sense AI',
+    page_icon='ui/assets/logo.png'
+)
 
 navigation.register('login', login_ui.page_login, is_default=True)
 navigation.register('first_access', first_access_ui.page_first_access)

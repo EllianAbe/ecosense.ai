@@ -27,7 +27,14 @@ class ChatbotService:
             image = Image.open(image_file)
 
             response = self.model.generate_content(
-                ["Descreva o que você vê nesta imagem em 100 palavras ou menos (responda em português do Brasil): ", image]
+                [
+                    (
+                        "Você é um assistente de um fluxo de economia circular. Sua atividade é identificar "
+                        "o produto presente na imagem. Instruções para a resposta: Liste os produtos de forma "
+                        "direta, separados por vírgula. Responda apenas com os nomes dos itens (ex: cascas de "
+                        "banana, folhas verdes, latas de alumínio, placa mãe, garrafa de vidro). Não use frases "
+                        "completas, parágrafos ou descrições detalhadas. Responda em português do Brasil."
+                    ), image]
             )
 
             return response.text
@@ -39,13 +46,16 @@ class ChatbotService:
         found_db_ids, found_distances = search_faiss_index(
             img_description, k=3)
 
-        query_result = collect_point_type_service.get_collect_points_by_collect_type(
-            found_db_ids[0])
+        if found_db_ids:
+            query_result = collect_point_type_service.get_collect_points_by_collect_type(
+                found_db_ids[0])
 
-        collect_points = []
+            collect_points = []
 
-        if query_result['status'] == 'success':
-            collect_points = query_result['data']
+            if query_result['status'] == 'success':
+                collect_points = query_result['data']
+        else:
+            collect_points = []
 
         return {
             'description': img_description,

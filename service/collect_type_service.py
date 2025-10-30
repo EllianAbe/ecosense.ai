@@ -18,40 +18,43 @@ warm_up_model()
 
 class CollectTypeService:
     def __init__(self, db: Session = None):
+        """O __init__ permanece o mesmo."""
         self.db = SessionLocal() if db is None else db
 
     def _add_embedding_to_faiss(self, collect_type_id: int, description: str):
-        """Cria embedding e adiciona no FAISS."""
-        index, id_map = load_faiss_index()
+        """Cria embedding e adiciona no FAISS usando IndexIDMap."""
+        index = load_faiss_index()
         embedding = get_embedding(description)
-        index.add(embedding)
-        id_map = np.append(id_map, collect_type_id)
-        save_faiss_index(index, id_map)
+
+        id_to_add = np.array([collect_type_id], dtype=np.int64)
+
+        index.add_with_ids(embedding, id_to_add)
+
+        save_faiss_index(index)
 
     def _update_embedding_in_faiss(self, collect_type_id: int, description: str):
-        """Atualiza o embedding."""
-        index, id_map = load_faiss_index()
+        """Atualiza o embedding no IndexIDMap."""
+        index = load_faiss_index()
         embedding = get_embedding(description)
 
-        if collect_type_id in id_map:
-            pos = np.where(id_map == collect_type_id)[0][0]
-            index.remove_ids(np.array([pos], dtype=np.int64))
-            index.add(embedding)
-        else:
-            index.add(embedding)
-            id_map = np.append(id_map, collect_type_id)
+        id_to_remove = np.array([collect_type_id], dtype=np.int64)
+        index.remove_ids(id_to_remove)
 
-        save_faiss_index(index, id_map)
+        id_to_add = np.array([collect_type_id], dtype=np.int64)
+        index.add_with_ids(embedding, id_to_add)
+
+        save_faiss_index(index)
 
     def _delete_embedding_from_faiss(self, collect_type_id: int):
         """Remove embedding quando um item é deletado."""
-        index, id_map = load_faiss_index()
+        index = load_faiss_index()
 
-        if collect_type_id in id_map:
-            pos = np.where(id_map == collect_type_id)[0][0]
-            index.remove_ids(np.array([pos], dtype=np.int64))
-            id_map = np.delete(id_map, pos)
-            save_faiss_index(index, id_map)
+        id_to_remove = np.array([collect_type_id], dtype=np.int64)
+
+        num_removed = index.remove_ids(id_to_remove)
+
+        if num_removed > 0:
+            save_faiss_index(index)
 
     def create_collect_type(self, description: str):
         """Cria um novo tipo de coleta no banco de dados e adiciona o embedding."""
