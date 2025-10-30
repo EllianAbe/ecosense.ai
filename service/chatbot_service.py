@@ -2,11 +2,15 @@ import google.generativeai as genai
 import os
 from PIL import Image
 import io
+import streamlit as st
+
+MAX_DESCRIPTION_TOKENS = int(os.getenv('MAX_DESCRIPTION_TOKENS', "100"))
+
 
 class ChatbotService:
     def __init__(self):
         # Use environment variable or Streamlit secrets
-        genai.configure(api_key="AIzaSyCQ3Xn3xWpJCSNUxDKOudWUTbKO2AszXDU")
+        genai.configure(api_key=st.secrets['GOOGLE_GENAIAI_KEY'])
         self.model = genai.GenerativeModel("gemini-2.5-flash")
 
     def get_response(self, user_message: str):
