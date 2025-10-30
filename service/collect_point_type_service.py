@@ -4,7 +4,7 @@ from db.models import CollectPointCollectType
 
 
 class CollectPointCollectTypeService:
-    def __init__(self, db: Session = None):
+    def __init__(self, *, db: Session = None):
         self.db = SessionLocal() if db is None else db
 
     def create_collect_point_collect_type(self, collect_point_id: int, collect_type_id: int):
@@ -62,5 +62,23 @@ class CollectPointCollectTypeService:
         except Exception as e:
             self.db.rollback()
             return {"status": "error", "message": f"Ocorreu um erro ao deletar a relação: {e}"}
+        finally:
+            self.db.close()
+
+    def get_collect_points_by_collect_type(self, collect_type_id: int):
+        """Busca todos os pontos de coleta associados a um determinado tipo de coleta."""
+        try:
+            relations = self.db.query(CollectPointCollectType).where(
+                CollectPointCollectType.collect_type_id == collect_type_id).all()
+
+            collect_points = [
+                relation.collect_point for relation in relations
+            ]
+
+            return {"status": "success", "data": collect_points}
+
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
         finally:
             self.db.close()
