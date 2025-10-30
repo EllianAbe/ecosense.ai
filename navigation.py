@@ -38,12 +38,12 @@ class NavigationFacade():
         st.switch_page(page)
 
     def get_page_args(self):
-        return st.session_state.page_args
+        return st.session_state.get('page_args', default={})
 
     def run(self):
         pg = st.navigation(
             list(self.pages.values()),
-            position='top'
+            position='hidden'
         )
 
         pg.run()
