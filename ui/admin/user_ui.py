@@ -23,13 +23,14 @@ def page_list_users():
     users_result = user_service.read_users()
     if users_result['status'] == 'error':
         st.error(users_result['message'])
-        st.stop()
+
+        return
 
     users = users_result['data']
     if not users_result:
         st.info("Nenhum usuário cadastrado ainda.")
-        st.stop()
 
+        return
     # Cabeçalhos da tabela
 
     with st.container(border=True):
