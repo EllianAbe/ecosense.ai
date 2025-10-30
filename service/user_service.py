@@ -2,6 +2,7 @@ import streamlit as st
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from db.models import User, UserPosition
+from logger import logger
 
 
 class UserService:
@@ -91,7 +92,7 @@ class UserService:
             user_count = self.db.query(User).count()
             return user_count == 0
         except Exception as e:
-            print(f"Erro ao verificar se a tabela está vazia: {e}")
+            logger.info(f"Erro ao verificar se a tabela está vazia: {e}")
             return True  # Assume vazia em caso de erro para evitar falhas
         finally:
             self.db.close()
