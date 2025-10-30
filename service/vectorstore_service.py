@@ -69,3 +69,30 @@ def save_faiss_index(index, id_map):
     """Persiste índice e mapa de ID do FAISS no disco."""
     faiss.write_index(index, FAISS_INDEX_PATH)
     np.save(FAISS_ID_MAP_PATH, id_map)
+
+
+def search_faiss_index(query_text: str, k: int = 3):
+    try:
+        logger.info(f"🔍 Iniciando busca semântica por: '{query_text}'")
+        index, id_map = load_faiss_index()
+
+        if index.ntotal == 0:
+            logger.warning(
+                "⚠️ O índice FAISS está vazio. Nenhuma busca pode ser realizada.")
+            return [], []
+
+        query_embedding = get_embedding(query_text)
+
+        k_search = min(k, index.ntotal)
+
+        distances, indices = index.search(query_embedding, k_search)
+
+        found_db_ids = [int(id_map[i]) for i in indices[0]]
+        found_distances = distances[0].tolist()
+
+        logger.info(f"✅ Busca concluída. IDs encontrados: {found_db_ids}")
+        return found_db_ids, found_distances
+
+    except Exception as e:
+        logger.error(f"❌ Erro durante a busca no FAISS: {e}")
+        return [], []
