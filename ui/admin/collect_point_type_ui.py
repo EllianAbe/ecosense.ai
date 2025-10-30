@@ -1,7 +1,7 @@
 from service.collect_point_service import CollectPointService
 from service.collect_point_type_service import CollectPointCollectTypeService
 from service.collect_type_service import CollectTypeService
-from ui.components import go_back_button
+from ui.components import home_button
 from navigation import navigation
 import streamlit as st
 
@@ -73,4 +73,4 @@ def page_collect_point_types():
 
         st.success("Tipos de materiais atualizados com sucesso!")
 
-    go_back_button()
+    home_button()

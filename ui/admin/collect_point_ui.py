@@ -1,7 +1,7 @@
 import streamlit as st
 from service.collect_point_service import CollectPointService
 from ui.components import feedback
-from ui.components import go_back_button
+from ui.components import home_button
 from navigation import navigation
 
 
@@ -10,7 +10,7 @@ def page_list_collect_points():
 
     collect_point_service = CollectPointService()
 
-    go_back_button()
+    home_button()
 
     if st.button("Criar Novo Ponto de Coleta"):
         navigation.goto("collect_point/edit")

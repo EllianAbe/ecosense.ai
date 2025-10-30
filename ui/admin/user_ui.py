@@ -1,7 +1,7 @@
 import streamlit as st
 from db.models import UserPosition
 from service.user_service import UserService
-from ui.components import go_back_button
+from ui.components import home_button
 from ui.components.feedback import send_feedback
 from navigation import navigation
 
@@ -14,7 +14,7 @@ def page_list_users():
     col1, col2, _ = st.columns([1.5, 3, 8.5])
 
     with col1:
-        go_back_button()
+        home_button()
 
     with col2:
         if st.button("Criar Novo Usuário"):
