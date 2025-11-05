@@ -37,6 +37,11 @@ def page_chatbot():
 
             with st.expander('Ver Descrição'):
                 st.write(result['description'])
+            
+            # Add: Checagem de "INVÁLIDO"
+            if result['description'].strip().upper() == "INVÁLIDO":
+                st.error("Imagem inválida - por favor avalie a imagem e envie novamente")
+                return
 
             collect_points = result['collect_points']
 

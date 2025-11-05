@@ -30,7 +30,10 @@ class ChatbotService:
                 [
                     (
                         "Você é um assistente de um fluxo de economia circular. Sua atividade é identificar "
-                        "o produto presente na imagem. Instruções para a resposta: Liste os produtos de forma "
+                        "o resíduo presente na imagem, que pode ser de natureza de lixo eletrônico, orgânico, e outros. "
+                        "Caso a imagem não seja de detrito, lixo orgânico, lixo eletrônico ou similar; ou se a foto tiver "
+                        "rostos humanos, responda apenas INVÁLIDO, para que isso possa ser capturado adequadamente. "
+                        "Instruções para a resposta (caso não seja INVÁLIDO): Liste os produtos de forma "
                         "direta, separados por vírgula. Responda apenas com os nomes dos itens (ex: cascas de "
                         "banana, folhas verdes, latas de alumínio, placa mãe, garrafa de vidro). Não use frases "
                         "completas, parágrafos ou descrições detalhadas. Responda em português do Brasil."
