@@ -1,6 +1,6 @@
 import streamlit as st
 from service.chatbot_service import ChatbotService
-from navigation import navigation
+from utils.navigation import navigation
 
 
 def page_chatbot():
@@ -37,10 +37,11 @@ def page_chatbot():
 
             with st.expander('Ver Descrição'):
                 st.write(result['description'])
-            
+
             # Add: Checagem de "INVÁLIDO"
             if result['description'].strip().upper() == "INVÁLIDO":
-                st.error("Imagem inválida - por favor avalie a imagem e envie novamente")
+                st.error(
+                    "Imagem inválida - por favor avalie a imagem e envie novamente")
                 return
 
             collect_points = result['collect_points']

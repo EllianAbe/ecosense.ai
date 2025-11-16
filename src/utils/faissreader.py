@@ -1,6 +1,6 @@
 import faiss
 import numpy as np
-from logger import logger
+from utils.logger import logger
 
 # Load your FAISS index from disk
 index = faiss.read_index("collect_types.faiss")

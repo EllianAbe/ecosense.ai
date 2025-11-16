@@ -1,60 +1,21 @@
 
 import numpy as np
-from db.database import SessionLocal
+from db.core import SessionLocal
 from db.models import CollectTypes
 from sqlalchemy.orm import Session
-from logger import logger
-from service.vectorstore_service import (
-    warm_up_model,
-    get_embedding,
-    save_faiss_index,
-    load_faiss_index
-)
+from utils.logger import logger
+from service.vectorstore_service import VectorStoreService
 
 
 # --- Dispara o carregamento assíncrono assim que o app inicia ---
-warm_up_model()
+vector_store_service = VectorStoreService()
+vector_store_service.warm_up_model()
 
 
 class CollectTypeService:
     def __init__(self, db: Session = None):
         """O __init__ permanece o mesmo."""
         self.db = SessionLocal() if db is None else db
-
-    def _add_embedding_to_faiss(self, collect_type_id: int, description: str):
-        """Cria embedding e adiciona no FAISS usando IndexIDMap."""
-        index = load_faiss_index()
-        embedding = get_embedding(description)
-
-        id_to_add = np.array([collect_type_id], dtype=np.int64)
-
-        index.add_with_ids(embedding, id_to_add)
-
-        save_faiss_index(index)
-
-    def _update_embedding_in_faiss(self, collect_type_id: int, description: str):
-        """Atualiza o embedding no IndexIDMap."""
-        index = load_faiss_index()
-        embedding = get_embedding(description)
-
-        id_to_remove = np.array([collect_type_id], dtype=np.int64)
-        index.remove_ids(id_to_remove)
-
-        id_to_add = np.array([collect_type_id], dtype=np.int64)
-        index.add_with_ids(embedding, id_to_add)
-
-        save_faiss_index(index)
-
-    def _delete_embedding_from_faiss(self, collect_type_id: int):
-        """Remove embedding quando um item é deletado."""
-        index = load_faiss_index()
-
-        id_to_remove = np.array([collect_type_id], dtype=np.int64)
-
-        num_removed = index.remove_ids(id_to_remove)
-
-        if num_removed > 0:
-            save_faiss_index(index)
 
     def create_collect_type(self, description: str):
         """Cria um novo tipo de coleta no banco de dados e adiciona o embedding."""
@@ -65,7 +26,8 @@ class CollectTypeService:
             self.db.refresh(new_collect_type)
 
             # Adiciona o embedding
-            self._add_embedding_to_faiss(new_collect_type.id, description)
+            vector_store_service.add_embedding(
+                new_collect_type.id, description)
 
             return {
                 "status": "success",
@@ -112,7 +74,8 @@ class CollectTypeService:
                 self.db.refresh(collect_type_to_update)
 
                 # Atualiza o embedding
-                self._update_embedding_in_faiss(collect_type_id, description)
+                vector_store_service.update_embedding(
+                    collect_type_id, description)
 
                 return {
                     "status": "success",
@@ -137,7 +100,7 @@ class CollectTypeService:
                 self.db.commit()
 
                 # Deletar embedding
-                self._delete_embedding_from_faiss(collect_type_id)
+                vector_store_service.remove_embedding(collect_type_id)
 
                 return {"status": "success", "message": f"Tipo de coleta ID {collect_type_id} deletado com sucesso!"}
             else:

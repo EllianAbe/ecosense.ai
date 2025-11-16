@@ -1,8 +1,8 @@
 import streamlit as st
 from sqlalchemy.orm import Session
-from db.database import SessionLocal
+from db.core import SessionLocal
 from db.models import User, UserPosition
-from logger import logger
+from utils.logger import logger
 
 
 class UserService:

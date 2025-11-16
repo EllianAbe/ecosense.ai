@@ -3,11 +3,12 @@ import os
 from PIL import Image
 import io
 import streamlit as st
-from service.vectorstore_service import search_faiss_index
+from service.vectorstore_service import VectorStoreService
 from service.collect_point_type_service import CollectPointCollectTypeService
 MAX_DESCRIPTION_TOKENS = int(os.getenv('MAX_DESCRIPTION_TOKENS', "100"))
 
 collect_point_type_service = CollectPointCollectTypeService()
+vector_store_service = VectorStoreService()
 
 
 class ChatbotService:
@@ -46,7 +47,7 @@ class ChatbotService:
 
     def search_collect_points(self, image_file: io.BytesIO):
         img_description = self.analyze_image(image_file)
-        found_db_ids, found_distances = search_faiss_index(
+        found_db_ids, found_distances = vector_store_service.search_faiss_index(
             img_description, k=3)
 
         if found_db_ids:

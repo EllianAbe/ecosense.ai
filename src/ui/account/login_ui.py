@@ -1,7 +1,7 @@
 import streamlit as st
 from service.auth_service import AuthService
 from service.user_service import UserService
-from navigation import navigation
+from utils.navigation import navigation
 auth_service = AuthService()
 user_service = UserService()
 

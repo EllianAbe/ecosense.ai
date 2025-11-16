@@ -1,6 +1,6 @@
 import streamlit as st
 from service.user_service import UserService
-from navigation import navigation
+from utils.navigation import navigation
 user_service = UserService()
 
 

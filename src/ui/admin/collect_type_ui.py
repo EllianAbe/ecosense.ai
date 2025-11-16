@@ -2,7 +2,7 @@ import streamlit as st
 from service.collect_type_service import CollectTypeService
 from ui.components import feedback
 from ui.components import home_button
-from navigation import navigation
+from utils.navigation import navigation
 
 
 def page_list_collect_types():

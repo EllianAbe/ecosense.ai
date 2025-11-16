@@ -1,5 +1,5 @@
 import streamlit as st
-from navigation import navigation
+from utils.navigation import navigation
 
 
 def home_button():

@@ -3,7 +3,7 @@ from db.models import UserPosition
 from service.user_service import UserService
 from ui.components import home_button
 from ui.components.feedback import send_feedback
-from navigation import navigation
+from utils.navigation import navigation
 
 user_service = UserService()
 
@@ -38,7 +38,6 @@ def page_list_users():
         col3.write("**Posição**")
         col4.write("**Ações**")
 
-    # Exibe cada usuário em uma linha
     for user in users:
         with st.container(border=True):
             col1, col2, col3, col4, col5 = st.columns([1, 3, 2, 1, 1.3])

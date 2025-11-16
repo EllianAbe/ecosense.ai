@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum as SQLAlchemyEnum
+from sqlalchemy import Column, Float, Integer, String, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 
-from db.database import Base
+from db.core import Base
 import enum
 
 
@@ -38,6 +38,8 @@ class CollectPoint(Base):
     contact_name = Column(String)
     phone = Column(String)
     email = Column(String)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
 
 class CollectPointCollectType(Base):

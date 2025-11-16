@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from db.database import SessionLocal
-from db.models import CollectPointCollectType, CollectTypes
+from db.core import SessionLocal
+from db.models import CollectPointCollectType
 
 
 class CollectPointCollectTypeService:
