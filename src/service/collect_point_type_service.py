@@ -79,13 +79,16 @@ class CollectPointCollectTypeService:
 
                 if point.id not in collect_points:
                     collect_points[point.id] = {
+                        "id": point.id,
                         "collect_point": point,
                         "collect_types": []
                     }
 
                 collect_points[point.id]["collect_types"].append(type)
 
-            return {"status": "success", "data": collect_points}
+            values = list(collect_points.values())
+
+            return {"status": "success", "data": values}
 
         except Exception as e:
             return {"status": "error", "message": str(e)}
