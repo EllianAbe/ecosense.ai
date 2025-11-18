@@ -40,7 +40,14 @@ def page_chatbot():
                 caption="Imagem enviada",
                 width=200)
 
-    if st.button("Analisar Imagem", disabled=not uploaded_file):
+    def clear_results():
+        st.session_state['results'] = {}
+        chatbot_service.set_chatbot()
+
+    if st.button("Analisar Imagem",
+                 disabled=not uploaded_file,
+                 on_click=clear_results,
+                 key='btn_analyze'):
         with st.spinner("Analisando imagem..."):
             points_result = chatbot_service.search_collect_points(
                 uploaded_file, st.session_state.get('user_location'))
@@ -131,29 +138,25 @@ def render_analysis_results(points_result, materials_result, uploaded_image):
     with tab3:
         st.subheader("Análise de Impacto Ambiental")
 
-        if st.button('Pesquisar Impactos Ambientais'):
+        if st.button('Pesquisar Impactos Ambientais', key='btn_env'):
             with st.spinner('Pesquisando impactos ambientais'):
-                environment_result = chatbot_service.describe_environment_impact(
+                st.session_state['results']['env'] = chatbot_service.describe_environment_impact(
                     points_result['description'], materials_result)
 
-            if environment_result:
-                st.success(environment_result)
-            else:
-                st.warning("Nenhum resultado de impacto ambiental disponível.")
+        if env_impact := st.session_state['results'].get('env'):
+            st.success(env_impact)
 
     # Aba 4: Impacto na Saúde
     with tab4:
         st.subheader("Análise de Impacto na Saúde")
 
-        if st.button('Pesquisar Impactos na Saúde'):
+        if st.button('Pesquisar Impactos na Saúde', key='btn_health'):
             with st.spinner('Pesquisando impactos na saúde humana'):
-                health_result = chatbot_service.describe_health_impact(
+                st.session_state['results']['health'] = chatbot_service.describe_health_impact(
                     points_result['description'], materials_result)
 
-            if health_result:
-                st.warning(health_result)
-            else:
-                st.warning("Nenhum resultado de impacto na saúde disponível.")
+        if health_impact := st.session_state['results'].get('health'):
+            st.warning(health_impact)
 
     # Aba 5: Chatbot
     with tab5:
@@ -165,13 +168,26 @@ def render_analysis_results(points_result, materials_result, uploaded_image):
         )
 
         if user_query:
-            user_message = st.session_state["chatbot_input"]
-            st.chat_message("user").markdown(user_message)
+            st.session_state['results'].setdefault('messages', [])
+            st.session_state['results']['messages'].append({
+                'role': 'user',
+                'text': user_query
+            })
 
             with st.spinner("Processando resposta do chatbot..."):
-                bot_response = chatbot_service.chatbot(
-                    uploaded_image,
-                    user_message
+                response = chatbot_service.call_chatbot(
+                    user_query, uploaded_image
                 )
 
-            st.chat_message("assistant").markdown(bot_response)
+                st.session_state['results']['messages'].append({
+                    'role': 'ai',
+                    'text': response
+                })
+
+            render_messages()
+
+
+def render_messages():
+    for message in st.session_state['results']['messages']:
+        with st.chat_message(message['role']):
+            st.write(message['text'])

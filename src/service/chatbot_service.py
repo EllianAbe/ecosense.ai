@@ -21,6 +21,7 @@ class ChatbotService:
         # Use environment variable or Streamlit secrets
         genai.configure(api_key=st.secrets['GOOGLE_GENAIAI_KEY'])
         self.model = genai.GenerativeModel("gemini-2.5-flash")
+        self.chat = None
 
     def analyze_image(self, image_file: io.BytesIO):
         """Analyze an uploaded image and return description"""
@@ -159,22 +160,23 @@ class ChatbotService:
             'collect_points': collect_points
         }
 
-    def chatbot(self, image_file: io.BytesIO, user_question: str):
-        img_description = self.analyze_image(image_file)
-
-        prompt = (
+    def set_chatbot(self):
+        system_instructions = (
             "Você é um assistente especializado em economia circular e gestão de resíduos sólidos. "
             "Responda exclusivamente a questões relacionadas a descarte, reciclagem, reuso e práticas sustentáveis. "
-            "Utilize a descrição a seguir da imagem para fornecer respostas claras, objetivas e informativas.\n\n"
-            f"Descrição da imagem: {img_description}\n\n"
-            f"Pergunta do usuário: {user_question}\n\n"
             "Responda de forma educada, prática e focada no contexto apresentado."
         )
 
-        response = self.model.generate_content(
-            [
-                prompt
-            ]
-        )
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash",
+            system_instruction=system_instructions)
 
-        return response.text.strip()
+        self.chat = model.start_chat()
+
+    def call_chatbot(self,  user_question: str, image_file: io.BytesIO = None):
+
+        content = [user_question] + \
+            [Image.open(image_file)] if image_file else []
+        resp = self.chat.send_message(content)
+
+        return resp.text
