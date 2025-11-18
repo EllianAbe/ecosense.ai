@@ -6,6 +6,8 @@ import streamlit as st
 from service.vectorstore_service import VectorStoreService
 from service.collect_point_type_service import CollectPointCollectTypeService
 from service.geo_location_service import GeoLocationService
+from utils.logger import logger
+
 MAX_DESCRIPTION_TOKENS = int(os.getenv('MAX_DESCRIPTION_TOKENS', "100"))
 
 collect_point_type_service = CollectPointCollectTypeService()
@@ -22,6 +24,8 @@ class ChatbotService:
 
     def analyze_image(self, image_file: io.BytesIO):
         """Analyze an uploaded image and return description"""
+
+        logger.info('Descrevendo a imagem')
         try:
 
             image = Image.open(image_file)
@@ -46,12 +50,13 @@ class ChatbotService:
 
     def describe_materials(self, materials):
         """Generate a concise description of materials from the image analysis."""
+
+        logger.info('Buscando lista detalhada de materiais e componentes')
         prompt = (
             "Utilize markdown para formatar sua resposta.\n\n"
             "Com base na seguinte lista de materiais, gere uma lista concisa dos elementos ou materiais"
             " contaminantes presentes nos resíduos mencionados. A lista deve ser separada por vírgulas "
-            "e conter apenas os nomes dos materiais. Se a descrição não mencionar nenhum material ou "
-            "resíduo, responda apenas com 'INVÁLIDO'.\n\n"
+            "e conter apenas os nomes dos materiais. "
             f"Lista de materiais: {materials}\n\n"
             "Descrição concisa dos materiais:"
         )
@@ -65,6 +70,7 @@ class ChatbotService:
 
     def describe_environment_impact(self, description, materials):
         """Generate an environmental impact description based on the image analysis."""
+        logger.info('buscando impactos ambientais')
         prompt = (
             "Utilize markdown para formatar sua resposta.\n\n"
             "Com base na seguinte descrição, forneça uma breve explicação do impacto ambiental "
@@ -85,6 +91,7 @@ class ChatbotService:
 
     def describe_health_impact(self, description, materials):
         """Generate a health impact description based on the image analysis."""
+        logger.info('buscando impactos na saúde')
         prompt = (
             "Utilize markdown para formatar sua resposta.\n\n"
             "Com base na seguinte descrição, forneça uma breve explicação do impacto na saúde "
@@ -104,6 +111,8 @@ class ChatbotService:
         return response.text.strip()
 
     def search_collect_points(self, image_file: io.BytesIO, user_location=None):
+        logger.info('buscando pontos de coleta')
+
         img_description = self.analyze_image(image_file)
         found_db_ids, found_distances = vector_store_service.search_faiss_index(
             img_description, k=3)
@@ -150,15 +159,16 @@ class ChatbotService:
             'collect_points': collect_points
         }
 
-    def chatbot_query(self, image_file: io.BytesIO, user_question: str):
+    def chatbot(self, image_file: io.BytesIO, user_question: str):
         img_description = self.analyze_image(image_file)
 
         prompt = (
-            "Você é um assistente especializado em economia circular e gestão de resíduos. "
-            "Com base na seguinte descrição de uma imagem, responda à pergunta do usuário de forma clara e concisa.\n\n"
+            "Você é um assistente especializado em economia circular e gestão de resíduos sólidos. "
+            "Responda exclusivamente a questões relacionadas a descarte, reciclagem, reuso e práticas sustentáveis. "
+            "Utilize a descrição a seguir da imagem para fornecer respostas claras, objetivas e informativas.\n\n"
             f"Descrição da imagem: {img_description}\n\n"
             f"Pergunta do usuário: {user_question}\n\n"
-            "Resposta:"
+            "Responda de forma educada, prática e focada no contexto apresentado."
         )
 
         response = self.model.generate_content(

@@ -32,7 +32,7 @@ def get_embedder():
 
 class VectorStoreService:
     def __init__(self):
-        self.embedder = get_embedder()
+        self.warm_up_model()
         self.index = self.load_faiss_index()
         self._index_lock = threading.Lock()
 
@@ -43,7 +43,7 @@ class VectorStoreService:
         def _load():
             try:
                 logger.info("🕓 Iniciando carregamento assíncrono do modelo...")
-                _ = self.get_embedder()
+                self.embedder = get_embedder()
                 logger.info(
                     "🔥 Modelo pronto para uso (carregado em background).")
             except Exception as e:

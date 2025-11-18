@@ -3,14 +3,15 @@ from service.chatbot_service import ChatbotService
 from utils.navigation import navigation
 from streamlit_geolocation import streamlit_geolocation
 
+chatbot_service = ChatbotService()
+
 
 def page_chatbot():
-    chatbot_service = ChatbotService()
 
     st.subheader("📸 Envie uma imagem para análise")
 
     with st.container(horizontal=True, vertical_alignment="center"):
-        with st.container(width=30):
+        with st.container(width=34):
             location = streamlit_geolocation()
 
         if location['latitude'] and location['longitude']:
@@ -45,16 +46,11 @@ def page_chatbot():
                 uploaded_file, st.session_state.get('user_location'))
             materials_result = chatbot_service.describe_materials(
                 points_result['description'])
-            environment_result = chatbot_service.describe_environment_impact(
-                points_result['description'], materials_result)
-            health_result = chatbot_service.describe_health_impact(
-                points_result['description'], materials_result)
 
             render_analysis_results(
                 points_result,
                 materials_result,
-                environment_result,
-                health_result
+                uploaded_file
             )
 
 
@@ -84,15 +80,13 @@ def render_collect_point_card(col, collect_point, collect_types, geographic_dist
 
 
 @st.dialog('Análise de Imagem', width='large')
-def render_analysis_results(points_result, materials_result, environment_result, health_result, uploaded_image):
+def render_analysis_results(points_result, materials_result, uploaded_image):
     """
     Exibe todos os resultados da análise em abas organizadas.
 
     Args:
         points_result: dict com 'description' e 'collect_points'
         materials_result: str com descrição dos materiais
-        environment_result: str com impacto ambiental
-        health_result: str com impacto na saúde
     """
 
     # Criar abas para cada resultado
@@ -101,7 +95,7 @@ def render_analysis_results(points_result, materials_result, environment_result,
         "🔍 Materiais",
         "🌍 Impacto Ambiental",
         "⚕️ Impacto na Saúde",
-        "🤖 Chatbot"
+        "🤖 Chatbot",
     ])
 
     # Aba 1: Pontos de Coleta
@@ -136,34 +130,46 @@ def render_analysis_results(points_result, materials_result, environment_result,
     # Aba 3: Impacto Ambiental
     with tab3:
         st.subheader("Análise de Impacto Ambiental")
-        if environment_result:
-            st.success(environment_result)
-        else:
-            st.warning("Nenhum resultado de impacto ambiental disponível.")
+
+        if st.button('Pesquisar Impactos Ambientais'):
+            with st.spinner('Pesquisando impactos ambientais'):
+                environment_result = chatbot_service.describe_environment_impact(
+                    points_result['description'], materials_result)
+
+            if environment_result:
+                st.success(environment_result)
+            else:
+                st.warning("Nenhum resultado de impacto ambiental disponível.")
 
     # Aba 4: Impacto na Saúde
     with tab4:
         st.subheader("Análise de Impacto na Saúde")
-        if health_result:
-            st.warning(health_result)
-        else:
-            st.warning("Nenhum resultado de impacto na saúde disponível.")
+
+        if st.button('Pesquisar Impactos na Saúde'):
+            with st.spinner('Pesquisando impactos na saúde humana'):
+                health_result = chatbot_service.describe_health_impact(
+                    points_result['description'], materials_result)
+
+            if health_result:
+                st.warning(health_result)
+            else:
+                st.warning("Nenhum resultado de impacto na saúde disponível.")
 
     # Aba 5: Chatbot
     with tab5:
         st.subheader("Chatbot")
         st.image(uploaded_image, caption="Imagem enviada", width=200)
-        st.chat_input(
-            label="Faça uma pergunta sobre a imagem",
+        user_query = st.chat_input(
+            placeholder="Faça uma pergunta sobre a imagem",
             key="chatbot_input"
         )
 
-        if st.session_state.get("chatbot_input"):
+        if user_query:
             user_message = st.session_state["chatbot_input"]
             st.chat_message("user").markdown(user_message)
 
             with st.spinner("Processando resposta do chatbot..."):
-                bot_response = ChatbotService().chat_with_image(
+                bot_response = chatbot_service.chatbot(
                     uploaded_image,
                     user_message
                 )
