@@ -4,7 +4,7 @@ from utils.navigation import navigation
 
 
 def card(title, desc, key, icon="♻️", target=None):
-    with st.container(width=200, border=True):
+    with st.container(width=200, border=True, height=240, vertical_alignment='distribute'):
         st.markdown(f"### {icon} {title}")
         st.write(desc)
 

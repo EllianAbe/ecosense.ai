@@ -1,5 +1,12 @@
 from ui.account import first_access_ui, login_ui
-from ui.admin import collect_point_ui, collect_type_ui, user_ui, collect_point_type_ui
+from ui.admin import (
+    collect_point_ui,
+    collect_type_ui,
+    user_ui,
+    collect_point_type_ui,
+    metrics_ui
+)
+
 from ui import chatbot_ui, home_ui
 from utils.navigation import navigation
 from db.core import init_db
@@ -26,6 +33,7 @@ navigation.register('collect_point/edit',
                     collect_point_ui.page_edit_collect_point)
 navigation.register('collect_point/types',
                     collect_point_type_ui.page_collect_point_types)
+navigation.register('metricas', metrics_ui.metrics_ui)
 
 
 # ...after other pages

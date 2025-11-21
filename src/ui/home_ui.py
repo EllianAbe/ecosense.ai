@@ -7,7 +7,7 @@ def page_home():
     st.title("Bem-vindo à EcoSense AI")
     st.write("Escolha uma opção abaixo para navegar pelo sistema:")
 
-    with st.container(horizontal=True, horizontal_alignment='distribute'):
+    with st.container(horizontal=True, horizontal_alignment='left'):
 
         card(
             "Usuários",
@@ -39,4 +39,12 @@ def page_home():
             "btn_chatbot",
             icon="🤖",
             target="chatbot",
+        )
+
+        card(
+            "Metricas",
+            "Analise Métricas de qualidade da aplicação.",
+            "btn_metrics",
+            icon="📈",
+            target="metricas",
         )

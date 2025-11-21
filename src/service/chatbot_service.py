@@ -5,12 +5,15 @@ import io
 import streamlit as st
 from service.vectorstore_service import VectorStoreService
 from service.collect_point_type_service import CollectPointCollectTypeService
+from service.collect_type_service import CollectTypeService
 from service.geo_location_service import GeoLocationService
 from utils.logger import logger
 
 MAX_DESCRIPTION_TOKENS = int(os.getenv('MAX_DESCRIPTION_TOKENS', "100"))
 
+
 collect_point_type_service = CollectPointCollectTypeService()
+collect_type_service = CollectTypeService()
 vector_store_service = VectorStoreService()
 geo_location_service = GeoLocationService()
 
@@ -121,9 +124,11 @@ class ChatbotService:
         if not found_db_ids:
             return {
                 'description': img_description,
+                'collect_type': None,
                 'collect_points': []
             }
 
+        collect_type = collect_type_service.get_collect_type(found_db_ids[0])
         query_result = collect_point_type_service.get_collect_points_by_collect_type(
             found_db_ids[0])
 
@@ -132,6 +137,7 @@ class ChatbotService:
         if query_result['status'] != 'success':
             return {
                 'description': img_description,
+                'collect_type': None,
                 'collect_points': []
             }
 
@@ -157,6 +163,7 @@ class ChatbotService:
 
         return {
             'description': img_description,
+            'collect_type': collect_type['data'].description,
             'collect_points': collect_points
         }
 
