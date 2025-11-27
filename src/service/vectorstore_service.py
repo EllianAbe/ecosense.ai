@@ -18,8 +18,7 @@ def get_embedder():
 
     logger.info("🔑 Conectando ao Hugging Face...")
 
-    HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN",
-                         "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")
+    HF_TOKEN = st.secrets['HUGGINGFACE_TOKEN']
     hf_login(HF_TOKEN)
 
     logger.info(
