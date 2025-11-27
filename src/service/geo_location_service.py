@@ -4,7 +4,7 @@ import streamlit as st
 
 class GeoLocationService:
     def __init__(self):
-        self.geolocator = GoogleV3(st.secrets["GOOGLE_API_KEY"])
+        self.geolocator = GoogleV3(st.secrets["GOOGLE_V3_API_KEY"])
 
     def get_coordinates(self, address: str):
 
