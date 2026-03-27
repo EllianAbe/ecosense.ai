@@ -1,0 +1,7 @@
+import streamlit as st
+from utils.navigation import navigation
+
+
+def home_button():
+    if st.button('Home'):
+        navigation.goto('home')
